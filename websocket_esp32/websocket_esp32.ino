@@ -34,7 +34,7 @@ UltraSonicDistanceSensor distanceSensor(triggerPin, echoPin);
 //const char* password = "24032017";
 const char* ssid = "8A4";
 const char* password = "123456789";
-const char* ip_host = "192.168.1.4";
+const char* ip_host = "192.168.1.11";
 //const char* ip_host = "arduino-socket-app.herokuapp.com";
 const uint16_t port = 3000;
 //const uint16_t port = 443;
@@ -82,29 +82,31 @@ void socketIOEvent(socketIOmessageType_t type, uint8_t * payload, size_t length)
           return;
         }
 
-        String eventName = doc[0];
-        USE_SERIAL.printf("[IOc] event name: %s\n", eventName.c_str());
+        String eventReceive = doc[0];
+        USE_SERIAL.printf("[IOc] event name: %s\n", eventReceive.c_str());
+        String eventName = eventReceive.substring(0, eventReceive.indexOf("&"));
+        String dataReceive = eventReceive.substring(eventReceive.indexOf("&") + 1, eventReceive.length());
 
         if (eventName == "S") {
 
           digitalWrite(IN1, 0);
           digitalWrite(IN2, 0);
-          ledcWrite(pwmChannel1, 100); // 0-255 ~ 0-12V
+          ledcWrite(pwmChannel1, dataReceive.toInt()); // 0-255 ~ 0-12V
           //
           digitalWrite(IN3, 0);
           digitalWrite(IN4, 0);
-          ledcWrite(pwmChannel2, 100);
+          ledcWrite(pwmChannel2, dataReceive.toInt());
           Serial.println("SSS");
         }
         if (eventName == "F") {
 
           digitalWrite(IN1, 0);
           digitalWrite(IN2, 1);
-          ledcWrite(pwmChannel1, 105); // 0-255 ~ 0-12V
+          ledcWrite(pwmChannel1, dataReceive.toInt() + 5); // 0-255 ~ 0-12V
           //
           digitalWrite(IN3, 0);
           digitalWrite(IN4, 1);
-          ledcWrite(pwmChannel2, 100);
+          ledcWrite(pwmChannel2, dataReceive.toInt());
 
           Serial.println("FFF");
         }
@@ -112,22 +114,22 @@ void socketIOEvent(socketIOmessageType_t type, uint8_t * payload, size_t length)
 
           digitalWrite(IN1, 1);
           digitalWrite(IN2, 0);
-          ledcWrite(pwmChannel1, 103); // 0-255 ~ 0-12V
+          ledcWrite(pwmChannel1, dataReceive.toInt() + 3); // 0-255 ~ 0-12V
           //
           digitalWrite(IN3, 1);
           digitalWrite(IN4, 0);
-          ledcWrite(pwmChannel2, 100);
+          ledcWrite(pwmChannel2, dataReceive.toInt());
           Serial.println("BBB");
         }
         if (eventName == "R") {
 
           digitalWrite(IN1, 0);
           digitalWrite(IN2, 1);
-          ledcWrite(pwmChannel1, 100); // 0-255 ~ 0-12V
+          ledcWrite(pwmChannel1, 120); // 0-255 ~ 0-12V
           //
           digitalWrite(IN3, 1);
           digitalWrite(IN4, 0);
-          ledcWrite(pwmChannel2, 100);
+          ledcWrite(pwmChannel2, 120);
           Serial.println("RRR");
 
         }
@@ -136,18 +138,24 @@ void socketIOEvent(socketIOmessageType_t type, uint8_t * payload, size_t length)
 
           digitalWrite(IN1, 1);
           digitalWrite(IN2, 0);
-          ledcWrite(pwmChannel1, 100); // 0-255 ~ 0-12V
+          ledcWrite(pwmChannel1, 120); // 0-255 ~ 0-12V
           //
           digitalWrite(IN3, 0);
           digitalWrite(IN4, 1);
-          ledcWrite(pwmChannel2, 100);
+          ledcWrite(pwmChannel2, 120));
           Serial.println("LLL");
 
         }
 
         if (eventName == "ON") {
-
-          turn_on_led();
+          int pos1 = dataReceive.indexOf("r");
+          int pos2 = dataReceive.indexOf("g");
+          int pos3 = dataReceive.indexOf("b");
+          int pos4 = dataReceive.indexOf("$");
+          String redString = dataReceive.substring(pos1 + 1, pos2);
+          String greenString = dataReceive.substring(pos2 + 1, pos3);
+          String blueString = dataReceive.substring(pos3 + 1, pos4);
+          turn_on_led(redString.toInt(), greenString.toInt(), blueString.toInt());
           Serial.println("ONNNNN");
 
         }
@@ -194,13 +202,22 @@ void socketIOEvent(socketIOmessageType_t type, uint8_t * payload, size_t length)
   }
 }
 
-void turn_on_led(void) {
-  led[0] = CRGB(255, 0, 0);
+void turn_on_led(int red, int green, int blue) {
+  led[0] = CRGB(red, green, blue);
+  led[1] = CRGB(red, green, blue);
+  led[2] = CRGB(red, green, blue);
+  led[3] = CRGB(red, green, blue);
+  led[4] = CRGB(red, green, blue);
   FastLED.show();
 }
 
+
 void turn_off_led(void) {
   led[0] = CRGB(0, 0, 0);
+  led[1] = CRGB(0, 0, 0);
+  led[2] = CRGB(0, 0, 0);
+  led[3] = CRGB(0, 0, 0);
+  led[4] = CRGB(0, 0, 0);
   FastLED.show();
 }
 
